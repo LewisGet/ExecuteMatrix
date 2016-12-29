@@ -97,3 +97,11 @@ class Entity:
 
     def active_frame(self):
         return self.Frames[self.Fps]
+
+    def remove_frames(self, fps=[]):
+        for value in fps:
+            del self.Frames[value]
+
+        clone_frames = self.Frames[:]
+
+        self.flush_frames(clone_frames)
