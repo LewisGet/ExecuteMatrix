@@ -105,3 +105,15 @@ class Entity:
         clone_frames = self.Frames[:]
 
         self.flush_frames(clone_frames)
+
+    def get_last_place(self):
+        return self.Frames[self.LastPlaceFps].block
+
+    def get_first_place(self):
+        return self.Frames[self.FirstPlaceFps].block
+
+    def get_last_location(self):
+        return self.Frames[self.get_last_fps()].location
+
+    def get_first_location(self):
+        return self.Frames[self.get_first_fps()].location
