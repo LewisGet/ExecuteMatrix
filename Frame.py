@@ -8,7 +8,7 @@ class Entity:
             self.direction = hp.XYZ(training_data['direction']).toArray()
             self.block = hp.XYZ(training_data['blockLocation']).toArray()
             self.action = training_data['block']
-        else:
+        elif training_data is not None:
             self.location = training_data.location
             self.direction = training_data.direction
             self.block = training_data.block

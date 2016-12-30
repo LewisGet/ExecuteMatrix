@@ -1,3 +1,4 @@
+import Frame
 import Action
 import Helper as Hp
 
@@ -29,6 +30,35 @@ class Entities:
         self.A = Action.Entity(a)
         self.B = Action.Entity(b)
 
+    def ab_mapping(self, a, b):
+        """
+        :type a: [Frame.Entity]
+        :type b: [Frame.Entity]
+        """
+        mapping = []
+        total_fps = min(len(a), len(b))
+        weghit = 1 / total_fps
+
+        for fps, [a_frame, b_frame] in enumerate(zip(a, b)):
+            a_biases, b_biases = total_fps - fps, fps
+            a_weghit, b_weghit = a_biases * weghit, b_biases * weghit
+
+            a_location_part, b_location_part = a_frame.location * a_weghit, b_frame.location * b_weghit
+            location = a_location_part + b_location_part
+
+            a_direction_part, b_direction_part = a_frame.direction * a_weghit, b_frame.direction * b_weghit
+            direction = a_direction_part + b_direction_part
+
+            new_frame = Frame.Entity(None)
+            new_frame.location = location
+            new_frame.direction = direction
+            new_frame.block = Hp.XYZ([0, 0, 0]).to_array()
+            new_frame.action = 0
+
+            mapping.append(new_frame)
+
+        return mapping
+
     def demo_execute(self, target_location):
         demo_correct = target_location - self.A.get_last_location()
         self.A.flush_frames(self.A.Frames[:], demo_correct)
@@ -38,8 +68,9 @@ class Entities:
         fps_a, half_a = self.A.get_end_half_sec()
         fps_b, half_b = self.B.get_before_place_half_sec_fps()
 
-        self.Mapping = Action.Entity(half_a)
-        self.Mapping.correct_location_array(half_b)
+        mapping = self.ab_mapping(half_a, half_b)
+
+        self.Mapping = Action.Entity(mapping)
 
         self.A.remove_frames(fps_a)
         self.B.remove_frames(fps_b)
