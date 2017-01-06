@@ -28,3 +28,10 @@ class XYZ:
 
     def not_null(self):
         return not self.is_null()
+
+
+def get_distance(a, b):
+    a = XYZ(a).to_array()
+    b = XYZ(b).to_array()
+
+    return np.linalg.norm(a - b)
