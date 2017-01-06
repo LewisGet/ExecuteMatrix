@@ -1,4 +1,5 @@
 import Helper as Hp
+import numpy as np
 import Frame
 
 
@@ -117,3 +118,48 @@ class Entity:
 
     def get_first_location(self):
         return self.Frames[self.get_first_fps()].location
+
+
+class Creator:
+    """value type
+
+    :type A: Frame.Entity
+    :type B: Frame.Entity
+    """
+    A = None
+    B = None
+
+    def line_frames(self, fps=30, action=False):
+        frames = []
+
+        ax, ay, az = Hp.XYZ(self.A.location).to_array()
+        bx, by, bz = Hp.XYZ(self.B.location).to_array()
+
+        ab_location = np.linspace(ax, bx, num=fps), np.linspace(ay, by, num=fps), np.linspace(az, bz, num=fps)
+        ab_location = np.array(ab_location)
+
+        ax, ay, az = Hp.XYZ(self.A.direction).to_array()
+        bx, by, bz = Hp.XYZ(self.B.direction).to_array()
+
+        ab_direction = np.linspace(ax, bx, num=fps), np.linspace(ay, by, num=fps), np.linspace(az, bz, num=fps)
+        ab_direction = np.array(ab_direction)
+
+        for location, direction in zip(ab_location.T, ab_direction.T):
+            entity = Frame.Entity(None)
+
+            entity.location = Hp.XYZ(location).to_array()
+            entity.direction = Hp.XYZ(direction).to_array()
+            entity.block = Hp.XYZ([0, 0, 0]).to_array()
+            entity.action = 0
+
+            frames.append(entity)
+
+        if action:
+            entity = frames[len(frames) - 1]
+            entity.block = Hp.XYZ(entity.location).to_array() + Hp.XYZ([0, -1.3, 0]).to_array()
+            entity.action = "place"
+
+            frames[len(frames) - 1] = entity
+
+        return Entity(frames)
+
