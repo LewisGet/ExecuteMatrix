@@ -168,3 +168,14 @@ class Creator:
         fps = int(distance / max_speed)
 
         return self.line_frames(fps, action)
+
+    def look_at_frames(self, fps=5):
+        A = Hp.XYZ(self.A.location).to_array()
+        B = Hp.XYZ(self.B.location).to_array()
+
+        look_at = B - A
+
+        self.B.location = self.A.location
+        self.B.direction = look_at
+
+        return self.line_frames(fps)
