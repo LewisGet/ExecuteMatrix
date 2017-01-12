@@ -163,3 +163,8 @@ class Creator:
 
         return Entity(frames)
 
+    def speed_limited_line_frames(self, max_speed=5, action=False):
+        distance = Hp.get_distance(self.A.location, self.B.location)
+        fps = int(distance / max_speed)
+
+        return self.line_frames(fps, action)
