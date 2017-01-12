@@ -13,11 +13,13 @@ class Targets:
 
         for x, row in enumerate(self.imageArray):
             for y, color in enumerate(row):
+                rgb = color[:-1]
+
                 if self.is_visible(color):
-                    self.contents.append([x, y, color])
+                    self.contents.append([x, y, rgb])
 
                     if self.is_contour(x, y):
-                        self.contours.append([x, y, color])
+                        self.contours.append([x, y, rgb])
 
     def get_image_array(self, path):
         image = Image.open(path).convert("RGBA")
@@ -31,7 +33,7 @@ class Targets:
         return not self.is_visible(rgba)
 
     def is_border(self, x, y):
-        return x in [0, self.imageArray.shape[0]] or y in [0, self.imageArray.shape[1]]
+        return x in [0, self.imageArray.shape[0] - 1] or y in [0, self.imageArray.shape[1] - 1]
 
     def is_contour(self, x, y):
         if self.is_border(x, y):
@@ -87,3 +89,58 @@ class ItemColors:
                 closest_index = index
 
         return closest_index, self.items[closest_index], self.colors[closest_index]
+
+
+class ScriptBasic:
+    targets = None
+    itemColors = ItemColors()
+    basicY = 5
+    script = []
+
+    def __init__(self, image_path):
+        self.targets = Targets(image_path)
+        self.execute()
+
+    def execute(self):
+        self.pre_execute()
+        self.do_execute()
+        self.post_execute()
+
+    def do_execute(self):
+        pass
+
+    def pre_execute(self):
+        pass
+
+    def post_execute(self):
+        pass
+
+    def get_blocks(self, targets):
+        blocks = []
+
+        for pixel in targets:
+            _, data, _ = self.itemColors.get_closet_dataset(pixel[2])
+
+            block = type('', (), {})()
+            block.y = self.basicY
+            block.x, block.z = pixel[0], pixel[1]
+            block.typeId, block.data = data
+
+            blocks.append(block)
+
+        return blocks
+
+
+class ScriptJavascript(ScriptBasic):
+    def javascript_template(self, value):
+        return "create(" + str(value.x) + ", " + str(value.y) + ", " + str(value.z) + ", " + str(value.typeId) + ", " + str(value.data) + ");"
+
+    def do_execute(self):
+        blocks = self.get_blocks(self.targets.contents)
+
+        for block in blocks:
+            self.script.append(self.javascript_template(block))
+
+    def post_execute(self):
+        for line in self.script:
+            print(line)
