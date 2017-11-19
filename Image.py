@@ -1,25 +1,84 @@
-import PIL.Image as Image
-import Helper as Hp
+from PIL import ImageDraw, Image
+import matplotlib.pyplot as plt
 import numpy as np
+import ntpath
+import glob
+import os
 
+class ItemColors:
+    colors = []
 
-class Targets:
+    def __init__(self, files_path):
+        for file_path in files_path:
+            var_id, var_type = self.get_image_id_and_type(file_path)
+            var_rgb = self.get_image_mean_colors(file_path)
+
+            self.colors.append({"id": var_id, "type": var_type, "rgb": var_rgb})
+
+    def get_image_id_and_type(self, path):
+        filename = ntpath.basename(path)
+        filename = (filename.split("."))[0]
+
+        return np.array(filename.split("-")).astype(int).tolist()
+
+    def get_image_mean_colors(self, path):
+        colors = []
+
+        img = Image.open(path).convert("RGB")
+        img = np.array(img)
+
+        for xy in img:
+            for y in xy:
+                colors.append(y)
+
+        colors = np.array(colors)
+        rgb = np.mean(colors, axis=0)
+        r, g, b = rgb
+
+        return [int(round(r)), int(round(g)), int(round(b))]
+
+    def get_color_distance(self, a, b):
+        a = np.array(a).astype(int)
+        b = np.array(b).astype(int)
+
+        return np.linalg.norm(a - b)
+
+    def get_closet_dataset(self, find_rgb, return_with_database_index=False):
+        distance = None
+        closest_index = None
+
+        for index, reg_color in enumerate(self.colors):
+            this_color_distance = self.get_color_distance(find_rgb, reg_color['rgb'])
+
+            if distance is None or distance > this_color_distance:
+                distance = this_color_distance
+                closest_index = index
+
+        if return_with_database_index:
+            return closest_index, self.colors[closest_index]
+
+        return self.colors[closest_index]
+
+class TargetImageToArrays:
     imageArray = None
     contours = []
     contents = []
+    without_contours_contents = []
 
-    def __init__(self, imagePath):
-        self.imageArray = self.get_image_array(imagePath)
+    def __init__(self, image_path):
+        self.imageArray = self.get_image_array(image_path)
 
         for x, row in enumerate(self.imageArray):
             for y, color in enumerate(row):
-                rgb = color[:-1]
+                rgb = (color[:-1]).tolist()
 
                 if self.is_visible(color):
                     self.contents.append([x, y, rgb])
 
                     if self.is_contour(x, y):
                         self.contours.append([x, y, rgb])
+                    else:
+                        self.without_contours_contents.append([x, y, rgb])
 
     def get_image_array(self, path):
         image = Image.open(path).convert("RGBA")
@@ -47,100 +106,7 @@ class Targets:
         return True in [up, down, left, right]
 
 
-class ItemColors:
-    items = [[35, 0], [35, 1], [35, 2], [35, 3], [35, 4], [35, 5], [35, 6], [35, 7], [159, 0], [159, 1], [159, 2], [159, 3], [159,4], [159,5], [159,6], [159,7], [35,8], [35,9], [35, 10], [35, 11], [35, 12], [35, 13], [35, 14], [35, 15], [159, 8], [159, 9], [159, 10], [159, 11], [159, 12], [159, 13], [159, 14], [159, 15]]
-    colors = [None] * 32
+default_files_path = os.sep.join([os.path.dirname(os.path.abspath(__file__)), "colors", "*.png"])
+default_files_path = glob.glob(default_files_path)
 
-    def __init__(self):
-        for i in range(32):
-            self.colors[i] = self.get_image_mean_colors(str(i + 1))
-
-    def get_image_mean_colors(self, number):
-        colors = []
-
-        img = Image.open("./colors/" + number + ".png").convert("RGB")
-        img = np.array(img)
-
-        for xy in img:
-            for y in xy:
-                colors.append(y)
-
-        colors = np.array(colors)
-        rgb = np.mean(colors, axis=0)
-        r, g, b = rgb
-
-        return [int(round(r)), int(round(g)), int(round(b))]
-
-    def get_color_distance(self, a, b):
-        a = np.array(a)
-        b = np.array(b)
-
-        return np.linalg.norm(a - b)
-
-    def get_closet_dataset(self, rgb):
-        distance = None
-        closest_index = None
-
-        for index, color in enumerate(self.colors):
-            this_color_distance = self.get_color_distance(rgb, color)
-
-            if distance is None or distance > this_color_distance:
-                distance = this_color_distance
-                closest_index = index
-
-        return closest_index, self.items[closest_index], self.colors[closest_index]
-
-
-class ScriptBasic:
-    targets = None
-    itemColors = ItemColors()
-    basicY = 5
-    script = []
-
-    def __init__(self, image_path):
-        self.targets = Targets(image_path)
-        self.execute()
-
-    def execute(self):
-        self.pre_execute()
-        self.do_execute()
-        self.post_execute()
-
-    def do_execute(self):
-        pass
-
-    def pre_execute(self):
-        pass
-
-    def post_execute(self):
-        pass
-
-    def get_blocks(self, targets):
-        blocks = []
-
-        for pixel in targets:
-            _, data, _ = self.itemColors.get_closet_dataset(pixel[2])
-
-            block = type('', (), {})()
-            block.y = self.basicY
-            block.x, block.z = pixel[0], pixel[1]
-            block.typeId, block.data = data
-
-            blocks.append(block)
-
-        return blocks
-
-
-class ScriptJavascript(ScriptBasic):
-    def javascript_template(self, value):
-        return "create(" + str(value.x) + ", " + str(value.y) + ", " + str(value.z) + ", " + str(value.typeId) + ", " + str(value.data) + ");"
-
-    def do_execute(self):
-        blocks = self.get_blocks(self.targets.contents)
-
-        for block in blocks:
-            self.script.append(self.javascript_template(block))
-
-    def post_execute(self):
-        for line in self.script:
-            print(line)
+DefaultBuildColors = ItemColors(default_files_path)

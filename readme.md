@@ -1,6 +1,6 @@
 # This is a project of display matrix actions
 
-nothing...
+Hello my friends, nothing there yet.
 
 # Tests
 
