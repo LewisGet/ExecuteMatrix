@@ -59,11 +59,18 @@ class ItemColors:
 
         return self.colors[closest_index]
 
+
 class TargetImageToArrays:
     imageArray = None
     contours = []
     contents = []
     without_contours_contents = []
+
+    min_x, min_y = None, None
+    max_x, max_y = None, None
+    total_pixel_x, total_pixel_y, total_pixel_amount = 0, 0, 0
+    mean_x, mean_y = 0, 0
+    size_x, size_y = 0, 0
 
     def __init__(self, image_path):
         self.imageArray = self.get_image_array(image_path)
@@ -73,12 +80,57 @@ class TargetImageToArrays:
                 rgb = (color[:-1]).tolist()
 
                 if self.is_visible(color):
+                    self.log_values(x, y)
                     self.contents.append([x, y, rgb])
 
                     if self.is_contour(x, y):
                         self.contours.append([x, y, rgb])
                     else:
                         self.without_contours_contents.append([x, y, rgb])
+
+        self.math_mean()
+        self.math_size()
+
+    def log_values(self, x, y):
+        self.total_pixel_amount += 1
+        self.total_pixel_x += x
+        self.total_pixel_y += y
+        self.update_max(x, y)
+        self.update_min(x, y)
+
+    def math_size(self):
+        self.size_x = self.max_x - self.min_x
+        self.size_y = self.max_y - self.min_y
+
+        if self.size_x < 0:
+            self.size_x = self.size_x * -1
+
+        if self.size_y < 0:
+            self.size_y = self.size_y * -1
+
+    def math_mean(self):
+        self.mean_x = int(self.total_pixel_x / self.total_pixel_amount)
+        self.mean_y = int(self.total_pixel_y / self.total_pixel_amount)
+
+    def update_min(self, x, y):
+        if self.min_x is None:
+            self.min_x = x
+        if self.min_y is None:
+            self.min_y = y
+        if self.min_x > x:
+            self.min_x = x
+        if self.min_y > y:
+            self.min_y = y
+
+    def update_max(self, x, y):
+        if self.max_x is None:
+            self.max_x = x
+        if self.max_y is None:
+            self.max_y = y
+        if self.max_x < x:
+            self.max_x = x
+        if self.max_y < y:
+            self.max_y = y
 
     def get_image_array(self, path):
         image = Image.open(path).convert("RGBA")
@@ -110,3 +162,4 @@ default_files_path = os.sep.join([os.path.dirname(os.path.abspath(__file__)), "c
 default_files_path = glob.glob(default_files_path)
 
 DefaultBuildColors = ItemColors(default_files_path)
+

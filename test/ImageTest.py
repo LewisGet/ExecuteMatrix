@@ -44,3 +44,13 @@ class TestTargetImageToArraysMethods(unittest.TestCase):
         self.assertEqual(y, 0)
         self.assertEqual(rgb, [255, 255, 255])
 
+    def test_value_count(self):
+        self.assertEqual(self.TestClassObject.min_x, 0)
+        self.assertEqual(self.TestClassObject.min_y, 0)
+
+        # img pixel - 1 (because array start at 0)
+        self.assertEqual(self.TestClassObject.max_x, 257)
+        self.assertEqual(self.TestClassObject.max_y, 257)
+
+        self.assertEqual(self.TestClassObject.mean_x, int(257 / 2))
+        self.assertEqual(self.TestClassObject.mean_y, int(257 / 2))
