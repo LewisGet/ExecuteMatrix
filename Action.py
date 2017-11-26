@@ -1,6 +1,7 @@
 import Helper as Hp
 import numpy as np
 import Frame
+from itertools import zip_longest
 
 
 class Entity:
@@ -129,6 +130,10 @@ class Creator:
     A = None
     B = None
 
+    def __init__(self, a=None, b=None):
+        self.A = a
+        self.B = b
+
     def line_frames(self, fps=30, action=False):
         frames = []
 
@@ -179,3 +184,45 @@ class Creator:
         self.B.direction = look_at
 
         return self.line_frames(fps)
+
+
+class Container:
+    Location = []
+    Direction = []
+
+    def __init__(self):
+        pass
+
+    def vec_line(self, fps, a, b):
+        ab_vec = []
+
+        for aa, bb in zip(a, b):
+            ab_vec.append(np.linspace(aa, bb, num=fps))
+
+        ab_vec_reshape = np.array(ab_vec).T
+        ab_vec_reshape = ab_vec_reshape.tolist()
+
+        return ab_vec_reshape
+
+    def limited_line_frames(self, a, b, max_limited=5):
+        distance = Hp.get_distance(a, b)
+        fps = int(distance / max_limited)
+
+        return self.vec_line(fps, a, b)
+
+    def export_frames(self):
+        frames = []
+        last_location = None
+        last_direction = None
+
+        for location, direction in zip_longest(self.Location, self.Direction):
+            last_location = location if location is not None else last_location
+            last_direction = direction if direction is not None else last_direction
+
+            location = location if location is not None else last_location
+            direction = direction if direction is not None else last_direction
+
+            frames.append({'location': location, 'direction': direction})
+
+        return frames
+
