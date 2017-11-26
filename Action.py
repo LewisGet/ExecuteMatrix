@@ -204,6 +204,11 @@ class Container:
 
         return ab_vec_reshape
 
+    def vec_direction(self, fps, vec_a, a, b):
+        vec_b = np.array(b[:]) - np.array(a[:])
+
+        return self.vec_line(fps, vec_a, vec_b)
+
     def limited_line_frames(self, a, b, max_limited=5):
         distance = Hp.get_distance(a, b)
         fps = int(distance / max_limited)

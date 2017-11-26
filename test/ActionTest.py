@@ -35,6 +35,17 @@ class TestContainerMethods(unittest.TestCase):
         self.assertEqual(len(vec), 30)
         self.assertEqual(vec[0], [1, 2, 3])
 
+    def test_vec_direction(self):
+        location_a, location_b = [1, 2, 3], [31, 32, 33]
+        vec_a = [0.5, 0.1, 0.1]
+
+        frames = self.TestClassObject.vec_direction(30, vec_a, location_a, location_b)
+
+        vec_b = frames[len(frames) - 1]
+
+        self.assertEqual(vec_b, [30, 30, 30])
+
+
     def test_export_frames(self):
         self.TestClassObject.Location = [[0, 0, 0], [0, 0, 1], [0, 0, 2], [0, 0, 3]]
         self.TestClassObject.Direction = [[0, 0, 0], [0, 0, 1], [0, 0, 2], [0, 0, 3], [0, 0, 4], [0, 0, 5]]
